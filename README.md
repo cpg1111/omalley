@@ -2,7 +2,7 @@
 
 Can I just talk? (named after Martin O'Malley)
 
-p2p leader collection for verbal chat
+p2p leader election for verbal chat
 
 ## Install:
 
