@@ -12,7 +12,7 @@ type AddrBook struct {
 	IsMaster  bool
 	Addrs     map[string]string
 	datastore *bolt.DB
-	lock      sync.Mutex
+	lock      *sync.Mutex
 	readIdx   int
 }
 
