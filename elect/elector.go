@@ -3,6 +3,7 @@ package elect
 import (
 	"net"
 	"sync"
+	"time"
 
 	"github.com/pullrequestrfb/omalley/action"
 )
@@ -26,4 +27,9 @@ func (e *Elector) Recv(conn *net.Conn, msg map[string]string) (bool, error) {
 		defer e.lock.Unlock()
 		e.Candidates[msg["candidate"]]++
 	}
+}
+
+func (e *Elector) Vote(vDispatcher Dispatcher) error {
+	act := <-e.Channel
+	return vDispatcher.DispatchVote(act)
 }

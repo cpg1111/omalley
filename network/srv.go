@@ -12,7 +12,7 @@ import (
 )
 
 type SRV struct {
-	Addrbook    addrbook.AddrBook
+	Addrbook    *addrbook.AddrBook
 	Host        string
 	Port        int
 	Name        string
@@ -39,7 +39,7 @@ func New(isMaster bool, master, name, host string, port int, abook addrbook.Addr
 	}
 }
 
-func (s *SRV) getHostAddr() net.TCPAddr {
+func (s *SRV) getHostAddr() (*net.TCPAddr, error) {
 	if strings.Contains(s.Host, ":") {
 		return net.ResolveTCPAddr("tcp6", fmt.Sprintf("[%s]:%d", s.Host, s.Port))
 	}
@@ -95,8 +95,11 @@ func (s *SRV) handleConn(conn *net.TCPConn) {
 }
 
 func (s *SRV) Run() error {
-	var err error
-	s.listener, err = net.ListenerTCP("tcp", s.getHostAddr())
+	addr, err := s.getHostAddr()
+	if err != nil {
+		return err
+	}
+	s.listener, err = net.ListenerTCP("tcp", addr)
 	if err != nil {
 		return err
 	}
