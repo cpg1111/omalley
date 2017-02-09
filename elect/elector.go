@@ -3,7 +3,6 @@ package elect
 import (
 	"net"
 	"sync"
-	"time"
 
 	"github.com/pullrequestrfb/omalley/action"
 )
@@ -21,12 +20,17 @@ func New(localChan chan *action.Action) *Elector {
 	}
 }
 
-func (e *Elector) Recv(conn *net.Conn, msg map[string]string) (bool, error) {
-	if msg["candidate"] != nil {
+func (e *Elector) Recv(conn *net.TCPConn, msg map[string]string) (bool, error) {
+	if len(msg["candidate"]) > 0 {
 		e.lock.Lock()
 		defer e.lock.Unlock()
 		e.Candidates[msg["candidate"]]++
 	}
+	return true, nil
+}
+
+func (e *Elector) Confirm(conn *net.TCPConn, msg map[string]string) (bool, error) {
+	return true, nil
 }
 
 func (e *Elector) Vote(vDispatcher Dispatcher) error {

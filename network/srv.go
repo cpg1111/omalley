@@ -2,13 +2,14 @@ package network
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net"
 	"strings"
-	"time"
 
 	"github.com/pullrequestrfb/omalley/action"
 	"github.com/pullrequestrfb/omalley/addrbook"
+	"github.com/pullrequestrfb/omalley/elect"
 )
 
 type SRV struct {
@@ -24,7 +25,7 @@ type SRV struct {
 	isMaster    bool
 }
 
-func New(isMaster bool, master, name, host string, port int, abook addrbook.AddrBook, elector *elect.Elector) *SRV {
+func New(isMaster bool, master, name, host string, port int, abook *addrbook.AddrBook, elector *elect.Elector) *SRV {
 	localChan := make(chan *action.Action)
 	return &SRV{
 		Addrbook:    abook,
@@ -34,7 +35,7 @@ func New(isMaster bool, master, name, host string, port int, abook addrbook.Addr
 		MasterAddr:  master,
 		LocalChan:   localChan,
 		Elector:     elect.New(localChan),
-		connections: make([]*net.TCPConn),
+		connections: []*net.TCPConn{},
 		isMaster:    isMaster,
 	}
 }
@@ -51,7 +52,7 @@ func (s *SRV) saveAddr(conn *net.TCPConn, msg map[string]string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err := s.Addrbook.Write(msgBytes)
+	_, err = s.Addrbook.Write(msgBytes)
 	if err != nil {
 		return false, err
 	}
@@ -72,10 +73,14 @@ func (s *SRV) delegateAction(conn *net.TCPConn, act *action.Action) (bool, error
 	case "elect":
 		return s.Elector.Confirm(conn, act.Msg)
 	}
+	return false, nil
+}
+
+func (s *SRV) CloseConn(conn *net.TCPConn) error {
+	return conn.Close()
 }
 
 func (s *SRV) handleConn(conn *net.TCPConn) {
-	buf := make([]byte, 4096)
 	read := true
 	defer s.CloseConn(conn)
 	for read {
@@ -83,12 +88,12 @@ func (s *SRV) handleConn(conn *net.TCPConn) {
 		decoder := json.NewDecoder(conn)
 		err := decoder.Decode(act)
 		if err != nil {
-			log.Error(err)
+			log.Println(err.Error())
 			return
 		}
 		read, err = s.delegateAction(conn, act)
 		if err != nil {
-			log.Error(err)
+			log.Println(err.Error())
 			return
 		}
 	}
@@ -99,13 +104,13 @@ func (s *SRV) Run() error {
 	if err != nil {
 		return err
 	}
-	s.listener, err = net.ListenerTCP("tcp", addr)
+	s.listener, err = net.ListenTCP("tcp", addr)
 	if err != nil {
 		return err
 	}
 	defer s.listener.Close()
 	for {
-		conn, err := s.listener.Accept()
+		conn, err := s.listener.AcceptTCP()
 		if err != nil {
 			return err
 		}
