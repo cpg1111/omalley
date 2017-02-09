@@ -1,6 +1,7 @@
 package addrbook
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -17,9 +18,12 @@ type AddrBook struct {
 }
 
 func New(isMaster bool, masterDBPath string) (*AddrBook, error) {
-	var db *bolt.DB
+	var (
+		db  *bolt.DB
+		err error
+	)
 	if isMaster {
-		db, err := bolt.Open(masterDBPath, 0600, nil)
+		db, err = bolt.Open(masterDBPath, 0600, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -52,18 +56,20 @@ func (a *AddrBook) save(tx *bolt.Tx) error {
 			return err
 		}
 	}
+	return nil
 }
 
 func (a *AddrBook) find(tx *bolt.Tx) error {
 	key := getKey()
-	bucket := tx.Bucket(key)
+	bucket := tx.Bucket([]byte(key))
 	inner := bucket.Bucket([]byte("addresses"))
 	cursor := inner.Cursor()
 	k, v := cursor.First()
 	for len(v) > 0 {
-		a.Addrs[k] = v
+		a.Addrs[string(k)] = string(v)
 		k, v = cursor.Next()
 	}
+	return nil
 }
 
 func (a *AddrBook) read(p []byte) (n int, err error) {
@@ -85,7 +91,7 @@ func (a *AddrBook) read(p []byte) (n int, err error) {
 func (a *AddrBook) readMaster(p []byte) (n int, err error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
-	err := a.datastore.View(a.find)
+	err = a.datastore.View(a.find)
 	if err != nil {
 		return 0, err
 	}
@@ -94,7 +100,7 @@ func (a *AddrBook) readMaster(p []byte) (n int, err error) {
 
 func (a *AddrBook) write(p []byte) (n int, err error) {
 	additional := make(map[string]string)
-	err := json.Unmarshal(p, addtional)
+	err = json.Unmarshal(p, additional)
 	if err != nil {
 		return 0, err
 	}
