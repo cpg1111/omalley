@@ -1,6 +1,10 @@
-hash: ddd64f139bcfa31b5e4178304f49ebed650898534dd24b849c6c25f12292a456
-updated: 2017-02-03T19:57:28.364061003-05:00
+hash: a5d8ccdbb7792cb73326b51cb8374348dbbeb2d2f4dc5d51aed05f49e35e9961
+updated: 2017-02-16T19:00:48.813071912-05:00
 imports:
 - name: github.com/boltdb/bolt
   version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
+- name: github.com/cihub/seelog
+  version: d2c6e5aa9fbfdd1c624e140287063c7730654115
+- name: github.com/coreos/flannel
+  version: d9560b051b0abe92048ae5c72b5fbd71ba7b8f17
 testImports: []
