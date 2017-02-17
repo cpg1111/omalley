@@ -17,7 +17,6 @@ var (
 	dbPath     = flag.String("dbpath", "/var/lib/omalley", "path to the persistent store for master, defaults to /var/lib/omalley")
 	host       = flag.String("bind-host", "0.0.0.0", "host interface to bind on, defaults to 0.0.0.0")
 	port       = flag.Int("port", 8044, "port to listen on, defaults to 8044")
-	vpnKey     = flag.String("vpn-key", "/etc/omalley/keys/default.pem", "path to vpn key, defaults to /etc/omalley/keys/default.pem")
 )
 
 func handleMainErr(err error) {
